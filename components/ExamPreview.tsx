@@ -1,5 +1,5 @@
 import React, { useRef } from 'react';
-import { UserInput, ExamData } from '../types';
+import { UserInput, ExamData, Question } from '../types';
 import { Download, Copy, FileText, CheckCircle2 } from 'lucide-react';
 
 interface ExamPreviewProps {
@@ -15,24 +15,17 @@ const ExamPreview: React.FC<ExamPreviewProps> = ({ inputData, examData }) => {
     if (!contentRef.current) return;
     
     try {
-      // We need to select the text range to copy it properly with formatting
       const range = document.createRange();
       range.selectNode(contentRef.current);
       window.getSelection()?.removeAllRanges();
       window.getSelection()?.addRange(range);
       
-      // Execute copy
       document.execCommand('copy');
-      
-      // Clear selection
       window.getSelection()?.removeAllRanges();
       
       setCopyStatus('copied');
       setTimeout(() => setCopyStatus('idle'), 3000);
-      
-      // Open Google Docs
       window.open('https://docs.new', '_blank');
-      
       alert("Konten berhasil disalin! Silakan tekan Ctrl+V di tab Google Dokumen yang baru terbuka.");
     } catch (err) {
       console.error('Failed to copy', err);
@@ -57,6 +50,8 @@ const ExamPreview: React.FC<ExamPreviewProps> = ({ inputData, examData }) => {
           .no-border td { border: none; }
           .header-text { text-align: center; font-weight: bold; font-size: 14pt; }
           .sub-header { text-align: center; font-size: 12pt; margin-bottom: 20px; }
+          .option-list { margin-left: 20px; }
+          .matching-table td { border: 1px solid #ccc; padding: 8px; }
         </style>
       </head>
       <body>`;
@@ -71,6 +66,69 @@ const ExamPreview: React.FC<ExamPreviewProps> = ({ inputData, examData }) => {
     fileDownload.download = `UH_${inputData.subject}_${inputData.className}.doc`;
     fileDownload.click();
     document.body.removeChild(fileDownload);
+  };
+
+  const renderQuestionContent = (q: Question) => {
+    switch (q.type) {
+      case 'Pilihan Ganda':
+        return (
+          <div className="ml-2">
+             <p className="mb-2">{q.text}</p>
+             <div className="grid gap-1 option-list">
+                {q.options?.map((opt, i) => (
+                   <div key={i}>{opt}</div>
+                ))}
+             </div>
+          </div>
+        );
+      
+      case 'Isian Singkat':
+        return (
+          <div className="ml-2">
+            <p className="mb-4 leading-loose">
+              {q.text} {q.text.includes('...') ? '' : '...................................................'}
+            </p>
+          </div>
+        );
+
+      case 'Menjodohkan':
+        return (
+          <div className="ml-2">
+            <p className="mb-3 italic">{q.text || 'Pasangkan pernyataan berikut dengan jawaban yang benar!'}</p>
+            {q.matchingPairs && (
+              <table className="w-full text-sm matching-table mb-4" style={{border: '1px solid #ddd'}}>
+                <thead>
+                  <tr className="bg-gray-50">
+                    <th className="p-2 border border-gray-300 text-left">Pernyataan</th>
+                    <th className="p-2 border border-gray-300 text-left">Jawaban/Pasangan</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {q.matchingPairs.map((pair, idx) => (
+                    <tr key={idx}>
+                      <td className="p-2 border border-gray-300 w-1/2 align-top">
+                        <span className="font-semibold mr-2">{String.fromCharCode(97 + idx)}</span>. {pair.premise}
+                      </td>
+                      <td className="p-2 border border-gray-300 w-1/2 align-top">
+                         ( ..... ) &nbsp;&nbsp; {pair.response}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+        );
+
+      case 'Uraian':
+      default:
+        return (
+          <div className="ml-2 w-full">
+             <p className="mb-2">{q.text}</p>
+             <div className="mt-2 h-20 border-b border-gray-300 border-dashed w-full"></div>
+          </div>
+        );
+    }
   };
 
   return (
@@ -168,23 +226,13 @@ const ExamPreview: React.FC<ExamPreviewProps> = ({ inputData, examData }) => {
           {/* SOAL */}
           <div>
             <h3 className="font-bold text-center mb-3 text-base uppercase">B. SOAL ULANGAN HARIAN</h3>
-            <div className="space-y-4 text-sm">
+            <div className="space-y-6 text-sm">
               {examData.questions.map((q, idx) => (
-                <div key={idx} className="mb-4 break-inside-avoid">
+                <div key={idx} className="break-inside-avoid">
                   <div className="flex gap-2">
                      <span className="font-bold">{q.number}.</span>
                      <div className="w-full">
-                        <p className="mb-2">{q.text}</p>
-                        {q.type === 'Pilihan Ganda' && q.options && (
-                           <div className="ml-2 grid gap-1">
-                              {q.options.map((opt, i) => (
-                                 <div key={i}>{opt}</div>
-                              ))}
-                           </div>
-                        )}
-                        {q.type === 'Uraian' && (
-                           <div className="mt-2 h-16 border-b border-gray-300 border-dashed w-full"></div>
-                        )}
+                        {renderQuestionContent(q)}
                      </div>
                   </div>
                 </div>

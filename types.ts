@@ -10,13 +10,15 @@ export interface UserInput {
   teacherNip: string;
   principalName: string;
   principalNip: string;
+  questionTypes: string[];
 }
 
 export interface Question {
   number: number;
-  type: 'Pilihan Ganda' | 'Uraian';
+  type: 'Pilihan Ganda' | 'Isian Singkat' | 'Uraian' | 'Menjodohkan';
   text: string;
-  options?: string[]; // Only for multiple choice
+  options?: string[]; // For multiple choice
+  matchingPairs?: { premise: string; response: string }[]; // For matching questions
 }
 
 export interface BlueprintItem {

@@ -30,12 +30,26 @@ const examSchema: Schema = {
         type: Type.OBJECT,
         properties: {
           number: { type: Type.INTEGER },
-          type: { type: Type.STRING, enum: ["Pilihan Ganda", "Uraian"] },
+          type: { 
+            type: Type.STRING, 
+            enum: ["Pilihan Ganda", "Isian Singkat", "Uraian", "Menjodohkan"] 
+          },
           text: { type: Type.STRING, description: "Pertanyaan soal" },
           options: { 
             type: Type.ARRAY, 
             items: { type: Type.STRING },
-            description: "Pilihan jawaban (hanya jika Pilihan Ganda, sertakan A, B, C, D di dalam string)" 
+            description: "Pilihan jawaban (wajib untuk Pilihan Ganda)" 
+          },
+          matchingPairs: {
+            type: Type.ARRAY,
+            description: "Pasangan soal menjodohkan (wajib untuk tipe Menjodohkan)",
+            items: {
+              type: Type.OBJECT,
+              properties: {
+                premise: { type: Type.STRING, description: "Pernyataan sebelah kiri" },
+                response: { type: Type.STRING, description: "Jawaban sebelah kanan" }
+              }
+            }
           }
         }
       }
@@ -55,12 +69,20 @@ export const generateExam = async (input: UserInput): Promise<ExamData> => {
     - Mata Pelajaran: ${input.subject}
     - Materi: ${input.subjectMatter}
     - Tujuan Pembelajaran: ${input.learningObjective}
+    - Jenis Soal yang diminta: ${input.questionTypes.join(', ')}
 
-    Instruksi:
-    1. Buat 5-10 butir soal (campuran Pilihan Ganda dan Uraian).
-    2. Sesuaikan tingkat kesulitan bahasa dan kognitif dengan jenjang ${input.level}.
-    3. Pastikan kisi-kisi sinkron dengan soal yang dibuat.
-    4. Output harus JSON valid sesuai schema.
+    Instruksi Khusus:
+    1. **BUATLAH MINIMAL 10 BUTIR SOAL** secara total.
+    2. Proporsikan jumlah soal berdasarkan jenis soal yang diminta.
+    3. Sesuaikan tingkat kesulitan bahasa dan kognitif dengan jenjang ${input.level}.
+    4. Pastikan kisi-kisi sinkron dengan soal yang dibuat.
+    
+    Detail Format Soal:
+    - Jika 'Menjodohkan': Berikan instruksi di 'text' dan isi 'matchingPairs' dengan pasangan yang benar.
+    - Jika 'Isian Singkat': Pastikan pertanyaan jelas dengan satu jawaban pasti.
+    - Jika 'Pilihan Ganda': Sediakan 4 opsi (A, B, C, D).
+    
+    Output harus JSON valid sesuai schema.
   `;
 
   try {

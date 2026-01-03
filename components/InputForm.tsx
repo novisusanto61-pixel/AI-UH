@@ -19,10 +19,18 @@ const InputForm: React.FC<InputFormProps> = ({ onSubmit, isLoading }) => {
     teacherName: '',
     teacherNip: '',
     principalName: '',
-    principalNip: ''
+    principalNip: '',
+    questionTypes: ['Pilihan Ganda', 'Uraian'] // Default selection
   });
 
   const [classOptions, setClassOptions] = useState<string[]>([]);
+
+  const availableTypes = [
+    'Pilihan Ganda',
+    'Isian Singkat',
+    'Menjodohkan',
+    'Uraian'
+  ];
 
   useEffect(() => {
     let options: string[] = [];
@@ -42,8 +50,23 @@ const InputForm: React.FC<InputFormProps> = ({ onSubmit, isLoading }) => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
+  const handleTypeChange = (type: string) => {
+    setFormData(prev => {
+      const current = prev.questionTypes;
+      if (current.includes(type)) {
+        return { ...prev, questionTypes: current.filter(t => t !== type) };
+      } else {
+        return { ...prev, questionTypes: [...current, type] };
+      }
+    });
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (formData.questionTypes.length === 0) {
+      alert("Pilih minimal satu jenis soal!");
+      return;
+    }
     onSubmit(formData);
   };
 
@@ -144,6 +167,24 @@ const InputForm: React.FC<InputFormProps> = ({ onSubmit, isLoading }) => {
             placeholder="Pecahan Sederhana"
             className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition"
           />
+        </div>
+
+        {/* Section 3.5: Jenis Soal */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Jenis Soal (Pilih Minimal 1)</label>
+          <div className="grid grid-cols-2 gap-2">
+            {availableTypes.map(type => (
+              <label key={type} className="flex items-center gap-2 p-2 border rounded cursor-pointer hover:bg-gray-50">
+                <input
+                  type="checkbox"
+                  checked={formData.questionTypes.includes(type)}
+                  onChange={() => handleTypeChange(type)}
+                  className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                />
+                <span className="text-sm text-gray-700">{type}</span>
+              </label>
+            ))}
+          </div>
         </div>
 
         {/* Section 4: Penandatangan */}
